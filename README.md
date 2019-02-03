@@ -1,109 +1,34 @@
-# typescript-module-starter
-
-## Tech Stack
-
-- [webpack](https://webpack.js.org/)
-- [TypeScript](http://www.typescriptlang.org/)
-- [TSLint](https://palantir.github.io/tslint/)
-- [Prettier](https://prettier.io/)
-- [Jest](https://facebook.github.io/jest/)
+# pubmed-parser
 
 ## Getting Started
 
-### Clone the repository
-
 ```
-git clone --depth=1 git@github.com:ncukondo/typescript-module-starter.git <project_name>
+yarn add @ncukondo/pubmed-parser
 ```
 
 or
 
 ```
-hub clone ncukondo/typescript-module-starter <project_name>
+npm install --save @ncukondo/pubmed-parser
 ```
 
-### Install dependencies
+## usage
 
-```
-cd <project_name>
-```
+```typescript
+import { PubmedParser } from "./index";
 
-```
-npm install
-```
+const parser = await PubmedParser.fromPmid("26314775");
 
-or
+console.log(parser.get("authors6"));
 
-```
-yarn install
-```
-
-### Install dependencies
-
-```
-cd <project_name>
-npm install
-```
-
-### Build development project
-
-```
-npm run build-dev
-```
-
-### Start dev server
-
-```
-npm run start
-```
-
-### Build production
-
-```
-npm run build
-```
-
-### Build module
-
-```
-npm run build-module
-```
-
-### lint
-
-```
-npm run lit
-```
-
-### (memo git)
-
-```
-git init
-git add *
-git commit -a -m "comment"
-git push origin master  //master
-```
-
-### (memo hub)
-
-```
-# URLが大幅短縮なclone
-$ hub clone USER_NAME/REPO_NAME
-
-# カレントディレクトリの名前でリポジトリ作成
-$ hub create
-
-# 指定した名前でリポジトリ作成
-$ hub create REPO_NAME
-
-# 現在のリポジトリをブラウザで開く
-$ hub browse
-
-# masterとDiff
-$ hub compare BRANCH
-
-# Pull Request
-$ git pull-request
+const long_format =
+  '${makeAuthorList()}. ${title}. ${year} ${month};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
+const short_format =
+  '${abbrej}. ${year}${month ? " "+ month : ""};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " pmid:" + pmid : ""}.';
+const result = parser.format(long_format);
+const short_result = parser.format(short_format);
+console.log("format:" + result);
+console.log("short_format:" + short_result);
 ```
 
 ## License
