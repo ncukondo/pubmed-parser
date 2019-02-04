@@ -19,9 +19,9 @@ export class PubmedParser {
     return parser;
   }
 
-  format(template: string): string {
+  format(template: string, variants: { [key: string]: string } = {}): string {
     if (!this._refEntry) return '';
-    const option: { [key: string]: any } = {};
+    const option: { [key: string]: any } = variants;
     for (let [key, value] of Object.entries(this._refEntry)) {
       option[key] = value();
     }

@@ -8,7 +8,11 @@ export class RefEntry {
   }
   private getPathTextFunc(path: string, delete_comma: boolean = false): () => string {
     return () => {
-      let result = this.$(path) ? this.$(path).text() : '';
+      let result = this.$(path)
+        ? this.$(path)
+            .first()
+            .text()
+        : '';
       if (delete_comma) {
         result = result.replace(/\.$/, '');
       }

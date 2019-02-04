@@ -9,13 +9,14 @@ describe('pubmed-parser', () => {
     });
   });
   describe('fromPmid().format()', () => {
-    it('pmid:26314775', async () => {
-      const parser = await PubmedParser.fromPmid('26314775');
+    it('pmid:24749846', async () => {
+      const parser = await PubmedParser.fromPmid('24749846');
+      const variants = { index: '1' };
       const long_format =
-        '${makeAuthorList()}. ${title}. ${year} ${month};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
+        '${index}) ${makeAuthorList()}. ${title}. ${year} ${month};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
       const short_format =
         '${abbrej}. ${year}${month ? " "+ month : ""};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " pmid:" + pmid : ""}.';
-      const result = parser.format(long_format);
+      const result = parser.format(long_format, variants);
       const short_result = parser.format(short_format);
       console.log('format:' + result);
       console.log('short_format:' + short_result);
