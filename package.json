@@ -1,11 +1,12 @@
 {
   "name": "@ncukondo/pubmed-parser",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "description": "",
   "main": "./built/index.js",
+  "types": "./built/index.d.js",
   "scripts": {
     "lint": "tslint --fix src/**/*.ts",
-    "test": "jest",
+    "test": "jest -i",
     "copy-to-dist": "cpx src/*.html dist",
     "watch": "npm run build-dev && webpack --watch --config webpack.dev.config.js",
     "start": "webpack-dev-server --config webpack.dev.config.js",
@@ -19,7 +20,7 @@
   },
   "keywords": [
     "typescript",
-    "Jest"
+    "Pubmed"
   ],
   "author": "ncukondo",
   "license": "MIT",
@@ -57,7 +58,6 @@
       "node"
     ]
   },
-  "repository": "git@github.com:ncukondo/typescript-module-starter.git",
   "dependencies": {
     "@types/cheerio": "^0.22.10",
     "axios": "^0.18.0",
