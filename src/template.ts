@@ -1,6 +1,13 @@
 export class Template {
-  private _prefix = String.raw`\$\{`;
-  private _postfix = String.raw`\}`;
+  private _prefix = '';
+  private _postfix = '';
+  private _rawprefix = '${';
+  private _rawpostfix = '}';
+
+  constructor() {
+    this.postfix = this._rawpostfix;
+    this.prefix = this._rawprefix;
+  }
 
   get prefix() {
     return this._prefix;
@@ -11,10 +18,12 @@ export class Template {
   }
 
   set prefix(newprefix: string) {
+    this._rawprefix = newprefix;
     this._prefix = this.escapeRegExp(newprefix);
   }
 
   set postfix(newpostfix: string) {
+    this._rawpostfix = newpostfix;
     this._postfix = this.escapeRegExp(newpostfix);
   }
 
@@ -27,7 +36,7 @@ export class Template {
     try {
       result = new Function(...Object.keys(option), 'return ' + expr)(...Object.values(option));
     } catch (e) {
-      console.error(`Error evaluating( ${expr} )    ${e}`);
+      console.error(`Error evaluating( ${this._rawprefix + expr + this._rawpostfix} )    ${e}`);
     }
     return result;
   }

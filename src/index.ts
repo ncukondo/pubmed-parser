@@ -7,6 +7,16 @@ const baseURL =
 
 const cache = new Map<string, PubmedParser>();
 
+class PmidError implements Error {
+  public name = 'PmidError';
+
+  constructor(public message: string) {}
+
+  toString() {
+    return `${this.name}: ${this.message}`;
+  }
+}
+
 export class PubmedParser {
   private _refEntry?: RefEntry;
   private _template: Template;
@@ -15,8 +25,23 @@ export class PubmedParser {
     this._template = new Template();
   }
 
+  static tryGetPmid(text: string): string {
+    text = text.trim().toLowerCase();
+    const reg_pmid1 = /^[0-9]+$/;
+    const reg_pmid2 = /^pmid ?\: ?([0-9]+)$/;
+    const reg_url = /^https\:\/\/www\.ncbi\.nlm\.nih\.gov\/pubmed[\w\&\?\=]*(?:term\=|\/)([0-9]+)/;
+    let result = reg_pmid1.exec(text);
+    if (result) return result[0];
+    result = reg_pmid2.exec(text);
+    if (result) return result[1];
+    result = reg_url.exec(text);
+    if (result) return result[1];
+    return '';
+  }
+
   static async fromPmid(pmid: string): Promise<PubmedParser> {
-    pmid = pmid.trim();
+    pmid = PubmedParser.tryGetPmid(pmid);
+    if (!pmid) throw new PmidError('Invalid PMID');
     let parser = cache.get(pmid);
     if (parser == undefined) {
       parser = new PubmedParser();
