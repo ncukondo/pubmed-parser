@@ -5,6 +5,8 @@ import { Template } from './template';
 const baseURL =
   'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=%s&retmode=xml';
 
+const cache = new Map<string, PubmedParser>();
+
 export class PubmedParser {
   private _refEntry?: RefEntry;
   private _template: Template;
@@ -14,8 +16,13 @@ export class PubmedParser {
   }
 
   static async fromPmid(pmid: string): Promise<PubmedParser> {
-    const parser = new PubmedParser();
-    await parser.setPmid(pmid);
+    pmid = pmid.trim();
+    let parser = cache.get(pmid);
+    if (parser == undefined) {
+      parser = new PubmedParser();
+      await parser.setPmid(pmid);
+      cache.set(pmid, parser);
+    }
     return parser;
   }
 
