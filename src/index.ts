@@ -2,6 +2,7 @@ import axios from 'axios';
 import { RefEntry } from './ref-entry';
 import { Template } from './template';
 import { searchWord2Pmids } from './search-word2pmid';
+import { doi2Pmid } from './doi2pmid';
 
 const baseURL =
   'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=%s&retmode=xml';
@@ -42,6 +43,9 @@ export class PubmedParser {
     if (result) return result;
     result = PubmedParser.tryGetPmidFromPubmedUrl(text);
     if (result) return result;
+    result = await doi2Pmid(text);
+    if (result) return result;
+
     const idlist = await searchWord2Pmids(text, 5);
     //console.log(`idlist = ${idlist}`);
     if (idlist.length > 0) return idlist[0];

@@ -6,6 +6,7 @@ const long_format =
 const short_format =
   '${abbrej}. ${year}${month ? " "+ month : ""};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " pmid:" + pmid : ""}.';
 const search_word1 = 'Br. J. Haematol. 1995;89(1):24-33';
+const doi = 'doi: 10.3109/00365540903384158 ';
 
 describe('pubmed-parser', () => {
   describe('from(pmid:26314775).get', () => {
@@ -74,6 +75,14 @@ describe('pubmed-parser', () => {
       const short_result = parser.format(short_format);
       //console.log(`fromsearchword('${search_word1}'):  ${short_result}`);
       expect(short_result).toEqual(`Br. J. Haematol. 1995 Jan;89(1):24-33 pmid:7530479.`);
+    });
+  });
+  describe('from(doi).format() short', () => {
+    it(`from('${doi}') to be Scand. J. Infect. Dis. 2010 Mar;42(3):222-4 pmid:19958237.`, async () => {
+      const parser = await PubmedParser.from(doi);
+      const short_result = parser.format(short_format);
+      //console.log(`fromsearchword('${search_word1}'):  ${short_result}`);
+      expect(short_result).toEqual(`Scand. J. Infect. Dis. 2010 Mar;42(3):222-4 pmid:19958237.`);
     });
   });
 });
