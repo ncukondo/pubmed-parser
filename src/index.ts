@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { RefEntry } from './ref-entry';
 import { Template } from './template';
+import { searchWord2Pmids } from './search-word2pmid';
 
 const baseURL =
   'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=%s&retmode=xml';
@@ -25,23 +26,45 @@ export class PubmedParser {
     this._template = new Template();
   }
 
-  static tryGetPmid(text: string): string {
+  static tryFormatPmid(text: string): string {
     text = text.trim().toLowerCase();
     const reg_pmid1 = /^[0-9]+$/;
     const reg_pmid2 = /^pmid ?\: ?([0-9]+)$/;
-    const reg_url = /^https\:\/\/www\.ncbi\.nlm\.nih\.gov\/pubmed[\w\&\?\=]*(?:term\=|\/)([0-9]+)/;
     let result = reg_pmid1.exec(text);
     if (result) return result[0];
     result = reg_pmid2.exec(text);
     if (result) return result[1];
-    result = reg_url.exec(text);
+    return '';
+  }
+
+  static async tryGetPmid(text: string): Promise<string> {
+    let result = PubmedParser.tryFormatPmid(text);
+    if (result) return result;
+    result = PubmedParser.tryGetPmidFromPubmedUrl(text);
+    if (result) return result;
+    const idlist = await searchWord2Pmids(text, 5);
+    //console.log(`idlist = ${idlist}`);
+    if (idlist.length > 0) return idlist[0];
+    //console.log(`cannot find = ${text}`);
+    return '';
+  }
+
+  static async from(text: string): Promise<PubmedParser> {
+    const pmid = await PubmedParser.tryGetPmid(text);
+    if (!pmid) throw new PmidError('Cannot get PMID');
+    return PubmedParser.fromPmid(pmid);
+  }
+
+  static tryGetPmidFromPubmedUrl(url: string): string {
+    url = url.trim().toLowerCase();
+    const reg_url = /^https\:\/\/www\.ncbi\.nlm\.nih\.gov\/pubmed[\w\&\?\=]*(?:term\=|\/)([0-9]+)/;
+    const result = reg_url.exec(url);
     if (result) return result[1];
     return '';
   }
 
   static async fromPmid(pmid: string): Promise<PubmedParser> {
-    pmid = PubmedParser.tryGetPmid(pmid);
-    if (!pmid) throw new PmidError('Invalid PMID');
+    if (!pmid.match(/^[0-9]+$/)) throw new PmidError('Invalid PMID');
     let parser = cache.get(pmid);
     if (parser == undefined) {
       parser = new PubmedParser();

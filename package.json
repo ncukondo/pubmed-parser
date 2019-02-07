@@ -1,6 +1,6 @@
 {
   "name": "@ncukondo/pubmed-parser",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "description": "",
   "main": "./built/index.js",
   "types": "./built/index.d.js",
@@ -16,7 +16,7 @@
     "build": "npm run clean && yarn run tsc -p ./tsconfig.module.json",
     "verdaccio:server": "verdaccio",
     "verdaccio:publish": "wait-on http://localhost:4873 && npm publish --registry http://localhost:4873",
-    "publish": "npm run test && npm run build && run-p verdaccio:*"
+    "publish-v": "npm run test && npm run build && run-p verdaccio:*"
   },
   "keywords": [
     "typescript",
