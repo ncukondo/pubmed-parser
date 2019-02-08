@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosPromise } from 'axios';
 import { RefEntry } from './ref-entry';
 import { Template } from './template';
 import { searchWord2Pmids } from './search-word2pmid';
@@ -22,6 +22,7 @@ class PmidError implements Error {
 export class PubmedParser {
   private _refEntry?: RefEntry;
   private _template: Template;
+  private _request: AxiosPromise<any> | null = null;
 
   private constructor() {
     this._template = new Template();
@@ -72,9 +73,9 @@ export class PubmedParser {
     let parser = cache.get(pmid);
     if (parser == undefined) {
       parser = new PubmedParser();
-      await parser.setPmid(pmid);
       cache.set(pmid, parser);
     }
+    await parser.setPmid(pmid);
     return parser;
   }
 
@@ -88,12 +89,13 @@ export class PubmedParser {
   }
 
   private async setPmid(pmid: string) {
-    const res = await axios.get(baseURL.replace('%s', pmid));
-    this.setXml(res.data);
-  }
-
-  private setXml(xml: string) {
-    this._refEntry = new RefEntry(xml);
+    if (this._refEntry) return;
+    if (!this._request) {
+      this._request = axios.get(baseURL.replace('%s', pmid));
+    }
+    const res = await this._request;
+    this._request = null;
+    this._refEntry = new RefEntry(res.data);
   }
 
   public get<T extends keyof RefEntry>(key: T): string {

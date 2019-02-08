@@ -1,19 +1,49 @@
-import axios from 'axios';
+import axios, { AxiosPromise } from 'axios';
 
 const BASE_URL =
   'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&sort=relevance&term=%1&retmax=%2';
-const cache = new Map<string, string[]>();
+const cache = new Map<string, SearchUrl2Pmids>();
 
-export async function searchWord2Pmids(
-  word: string,
-  retmax = 5,
-  appendautotag = true,
-  escape = true
-): Promise<string[]> {
-  let key = word + retmax;
-  let prev = cache.get(key);
-  let result = prev ? prev : new Array<string>();
-  if (!word || result.length > 0) return result;
+class SearchUrl2Pmids {
+  private _url = '';
+  private _request: AxiosPromise | null = null;
+  private _list = new Array<string>();
+
+  private constructor(url: string) {
+    this._url = url;
+  }
+
+  static create(url: string): SearchUrl2Pmids {
+    const key = url;
+    //console.log(`search-key=${key}`);
+    let result = cache.get(key);
+    if (!result) {
+      result = new SearchUrl2Pmids(url);
+      cache.set(key, result);
+      //console.log(`searchurl=${url}`);
+    }
+    return result;
+  }
+
+  async doGet(): Promise<string[]> {
+    if (this._list.length > 0) return this._list;
+    if (!this._request) {
+      this._request = axios.get(this._url);
+    }
+    let res = await this._request;
+    this._request = null;
+    let data = res.data;
+    if (data.esearchresult && data.esearchresult.idlist) {
+      const result = data.esearchresult.idlist;
+      this._list = result.length > 0 ? result : this._list;
+      //console.log(`idlist=${result}`);
+    }
+    return this._list;
+  }
+}
+
+const makeurl = (word: string, retmax: number, appendautotag: boolean, escape: boolean): string => {
+  if (!word) return '';
   let searchword = word;
   if (appendautotag) {
     searchword = searchword.replace(/([^\d])([12][0-9]{3})([^\d])/, '$1$2[year]$3');
@@ -24,13 +54,17 @@ export async function searchWord2Pmids(
   if (escape) {
     url = url.replace('%1', encodeURIComponent(searchword));
   }
-  //console.log(`searchurl=${url}`);
-  const res = await axios.get(url);
-  let data = res.data;
-  if (data.esearchresult && data.esearchresult.idlist) {
-    result = data.esearchresult.idlist;
-    if (result) cache.set(key, result);
-    //console.log(`idlist=${result}`);
-  }
-  return result;
-}
+  return url;
+};
+
+export const searchWord2Pmids = async (
+  word: string,
+  retmax = 5,
+  appendautotag = true,
+  escape = true
+): Promise<string[]> => {
+  const url = makeurl(word, retmax, appendautotag, escape);
+  if (!url) return new Array<string>();
+  const worker = SearchUrl2Pmids.create(url);
+  return await worker.doGet();
+};
