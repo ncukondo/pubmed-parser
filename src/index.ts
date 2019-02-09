@@ -93,9 +93,14 @@ export class PubmedParser {
     if (!this._request) {
       this._request = axios.get(baseURL.replace('%s', pmid));
     }
-    const res = await this._request;
-    this._request = null;
-    this._refEntry = new RefEntry(res.data);
+    try {
+      const res = await this._request;
+      this._request = null;
+      if (res.status == 200) this._refEntry = new RefEntry(res.data);
+    } catch (e) {
+      this._request = null;
+      throw e;
+    }
   }
 
   public get<T extends keyof RefEntry>(key: T): string {

@@ -30,13 +30,18 @@ class SearchUrl2Pmids {
     if (!this._request) {
       this._request = axios.get(this._url);
     }
-    let res = await this._request;
-    this._request = null;
-    let data = res.data;
-    if (data.esearchresult && data.esearchresult.idlist) {
-      const result = data.esearchresult.idlist;
-      this._list = result.length > 0 ? result : this._list;
-      //console.log(`idlist=${result}`);
+    try {
+      let res = await this._request;
+      this._request = null;
+      let data = res.status == 200 ? res.data : null;
+      if (data && data.esearchresult && data.esearchresult.idlist) {
+        const result = data.esearchresult.idlist;
+        this._list = result.length > 0 ? result : this._list;
+        //console.log(`idlist=${result}`);
+      }
+    } catch (e) {
+      this._request = null;
+      throw e;
     }
     return this._list;
   }
