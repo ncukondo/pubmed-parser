@@ -43,7 +43,7 @@ export class RefEntry {
 
   year = this.getPathTextFunc('PubDate > Year');
   month = this.getPathTextFunc('PubDate > Month');
-  abbrej = this.getPathTextFunc('ISOAbbreviation', true);
+  journal_short = this.getPathTextFunc('ISOAbbreviation', true);
   doi = this.getPathTextFunc('ArticleId[IdType="doi"]');
   journal = this.getPathTextFunc('Journal > Title', true);
   title = this.getPathTextFunc('ArticleTitle', true);

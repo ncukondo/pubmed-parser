@@ -1,8 +1,10 @@
 import axios, { AxiosPromise } from 'axios';
 import { RefEntry } from './ref-entry';
-import { Template } from './template';
+import { Template, PrintErrorFuncType } from './template';
 import { searchWord2Pmids } from './search-word2pmid';
 import { doi2Pmid } from './doi2pmid';
+
+export { PubmedParser };
 
 const baseURL =
   'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=%s&retmode=xml';
@@ -19,30 +21,45 @@ class PmidError implements Error {
   }
 }
 
-export class PubmedParser {
+class PubmedParser {
   private _refEntry?: RefEntry;
-  private _template: Template;
   private _request: AxiosPromise<any> | null = null;
+  formatter: Template = new Template();
 
-  private constructor() {
-    this._template = new Template();
+  private constructor() {}
+
+  format(
+    template: string,
+    variants: { [key: string]: string } = {},
+    onError: PrintErrorFuncType | null = null
+  ): string {
+    if (!this._refEntry) return '';
+    const option: { [key: string]: any } = variants;
+    for (let [key, value] of Object.entries(this._refEntry)) {
+      option[key] = value();
+    }
+    return this.formatter.formatEval(template, option, onError);
   }
 
-  static tryFormatPmid(text: string): string {
+  static extractPmidFromText(text: string): string {
     text = text.trim().toLowerCase();
     const reg_pmid1 = /^[0-9]+$/;
-    const reg_pmid2 = /^pmid ?\: ?([0-9]+)$/;
+    const reg_pmid2 = /^(?:.* )?pmid ?\: ?([0-9]+)(?:[\. ].*)?$/;
+    const reg_pmid3 = /^(?:.* )?pmid ?\: ?([0-9]+) ?\[pmid\](?:[\. ].*)?$/;
+    const reg_url = /^https\:\/\/www\.ncbi\.nlm\.nih\.gov\/pubmed[\w\&\?\=]*(?:term\=|\/)([0-9]+)/;
     let result = reg_pmid1.exec(text);
     if (result) return result[0];
     result = reg_pmid2.exec(text);
+    if (result) return result[1];
+    result = reg_pmid3.exec(text);
+    if (result) return result[1];
+    result = reg_url.exec(text);
     if (result) return result[1];
     return '';
   }
 
   static async tryGetPmid(text: string): Promise<string> {
-    let result = PubmedParser.tryFormatPmid(text);
-    if (result) return result;
-    result = PubmedParser.tryGetPmidFromPubmedUrl(text);
+    let result = PubmedParser.extractPmidFromText(text);
     if (result) return result;
     result = await doi2Pmid(text);
     if (result) return result;
@@ -60,14 +77,6 @@ export class PubmedParser {
     return PubmedParser.fromPmid(pmid);
   }
 
-  static tryGetPmidFromPubmedUrl(url: string): string {
-    url = url.trim().toLowerCase();
-    const reg_url = /^https\:\/\/www\.ncbi\.nlm\.nih\.gov\/pubmed[\w\&\?\=]*(?:term\=|\/)([0-9]+)/;
-    const result = reg_url.exec(url);
-    if (result) return result[1];
-    return '';
-  }
-
   static async fromPmid(pmid: string): Promise<PubmedParser> {
     if (!pmid.match(/^[0-9]+$/)) throw new PmidError('Invalid PMID');
     let parser = cache.get(pmid);
@@ -77,15 +86,6 @@ export class PubmedParser {
     }
     await parser.setPmid(pmid);
     return parser;
-  }
-
-  format(template: string, variants: { [key: string]: string } = {}): string {
-    if (!this._refEntry) return '';
-    const option: { [key: string]: any } = variants;
-    for (let [key, value] of Object.entries(this._refEntry)) {
-      option[key] = value();
-    }
-    return this._template.formatEval(template, option);
   }
 
   private async setPmid(pmid: string) {

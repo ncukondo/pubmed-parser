@@ -51,7 +51,7 @@ const makeurl = (word: string, retmax: number, appendautotag: boolean, escape: b
   if (!word) return '';
   let searchword = word;
   if (appendautotag) {
-    searchword = searchword.replace(/([^\d])([12][0-9]{3})([^\d])/, '$1$2[year]$3');
+    searchword = searchword.replace(/([^\d])([12][0-9]{3})([^\d])/, '$1$2[DP]$3');
   }
   searchword = searchword.replace(/\:/g, ' ').replace(/\;/g, ' ');
   //console.log(`searchword=${searchword}`);

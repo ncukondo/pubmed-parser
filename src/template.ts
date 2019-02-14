@@ -1,12 +1,22 @@
-export class Template {
-  private _prefix = '';
-  private _postfix = '';
-  private _rawprefix = '${';
-  private _rawpostfix = '}';
+export { Template, PrintErrorFuncType };
+
+type PrintErrorFuncType = (key: string, soure: Template, e: Error) => string;
+
+class Template {
+  private _prefixForRegEx = '';
+  private _postfixForRegEx = '';
+  private _prefix = '${';
+  private _postfix = '}';
+  private _currentSource = '';
+  maxCharForEval = 256;
 
   constructor() {
-    this.postfix = this._rawpostfix;
-    this.prefix = this._rawprefix;
+    this.postfix = this._postfix;
+    this.prefix = this._prefix;
+  }
+
+  get currentSource() {
+    return this._currentSource;
   }
 
   get prefix() {
@@ -18,44 +28,78 @@ export class Template {
   }
 
   set prefix(newprefix: string) {
-    this._rawprefix = newprefix;
-    this._prefix = this.escapeRegExp(newprefix);
+    this._prefix = newprefix;
+    this._prefixForRegEx = this.escapeRegExp(newprefix);
   }
 
   set postfix(newpostfix: string) {
-    this._rawpostfix = newpostfix;
-    this._postfix = this.escapeRegExp(newpostfix);
+    this._postfix = newpostfix;
+    this._postfixForRegEx = this.escapeRegExp(newpostfix);
   }
 
   private escapeRegExp(target: string) {
     return target.replace(/[.*+?^=!:${}()|[\]\/\\]/g, '\\$&');
   }
 
-  private evaluate(expr: string, option: { [key: string]: any }) {
+  private evaluate(
+    expr: string,
+    option: { [key: string]: string | Function },
+    onError: PrintErrorFuncType
+  ) {
     let result = '';
     try {
+      if (expr.length > this.maxCharForEval) {
+        throw new Error(
+          `Eval error: key length should not exceed ${this.maxCharForEval}(length:${expr.length})`
+        );
+      }
       result = new Function(...Object.keys(option), 'return ' + expr)(...Object.values(option));
     } catch (e) {
-      console.error(`Error evaluating( ${this._rawprefix + expr + this._rawpostfix} )    ${e}`);
+      result = onError(expr, this, e);
     }
     return result;
   }
 
-  formatEval(text: string, option: { [key: string]: any }): string {
+  private printErrorHandler(key: string, source: Template, e: Error): string {
+    return `${source.prefix} error:'${key}' - '${e}' ${source.postfix}`;
+  }
+
+  private emptyErrorHandler(): string {
+    return '';
+  }
+
+  formatEval(
+    text: string,
+    option: { [key: string]: string | Function },
+    printError?: PrintErrorFuncType | boolean | null
+  ): string {
+    let errorHandler: PrintErrorFuncType;
+    if (arguments.length < 3 || printError == null) {
+      errorHandler = this.printErrorHandler;
+    } else if (typeof printError === 'boolean') {
+      errorHandler = (printError as boolean) ? this.printErrorHandler : this.emptyErrorHandler;
+    } else {
+      errorHandler = printError as PrintErrorFuncType;
+    }
     return this.format(text, key => {
-      return this.evaluate(key, option) as string;
+      return this.evaluate(key, option, errorHandler) as string;
     });
+    '';
   }
 
   format(text: string, dict: { [key: string]: string }): string;
   format(text: string, func: (key: string) => string): string;
   format(text: string, processor: any): string {
-    return text.replace(new RegExp(this.prefix + '(.*?)' + this.postfix, 'g'), (all, key) => {
-      if (processor instanceof Function) {
-        return (processor as (key: string) => string)(key);
-      } else {
-        return Object.prototype.hasOwnProperty.call(processor, key) ? processor[key] : '';
+    this._currentSource = text;
+    return text.replace(
+      new RegExp(this._prefixForRegEx + '(.*?)' + this._postfixForRegEx, 'g'),
+      (all, key) => {
+        if (processor instanceof Function) {
+          return (processor as (key: string) => string)(key);
+        } else {
+          return Object.prototype.hasOwnProperty.call(processor, key) ? processor[key] : '';
+        }
       }
-    });
+    );
   }
 }

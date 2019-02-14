@@ -4,11 +4,11 @@ jest.unmock('./index');
 const long_format =
   '${index}) ${makeAuthorList()}. ${title}. ${year} ${month};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
 const short_format =
-  '${abbrej}. ${year}${month ? " "+ month : ""};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " pmid:" + pmid : ""}.';
+  '${journal_short}. ${year}${month ? " "+ month : ""};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " pmid:" + pmid : ""}.';
 const search_word1 = 'Br. J. Haematol. 1995;89(1):24-33';
 const doi = 'doi: 10.3109/00365540903384158 ';
 
-describe('pubmed-parser', () => {
+describe('index.ts', () => {
   describe('from(pmid:26314775).get', () => {
     it('get(authors6) to be Fizazi K, Greco FA, Pavlidis N, Daugaard G, Oien K, Pentheroudakis G', async () => {
       const parser = await PubmedParser.from('pmid:26314775');
@@ -30,6 +30,20 @@ describe('pubmed-parser', () => {
       );
       //console.log('PMID=' + pmid);
       expect(pmid).toBe(`18342212`);
+    });
+    it('get from "Biosci. Biotechnol. Biochem. 2017;81(7):1363-1368 pmid:28475418." to be 28475418', async () => {
+      const pmid = await PubmedParser.tryGetPmid(
+        'Biosci. Biotechnol. Biochem. 2017;81(7):1363-1368 pmid:28475418.'
+      );
+      //console.log('PMID=' + pmid);
+      expect(pmid).toBe(`28475418`);
+    });
+    it('get from "Biosci. Biotechnol. Biochem. 2017;81(7):1363-1368 28475418[PMID]." to be 28475418', async () => {
+      const pmid = await PubmedParser.tryGetPmid(
+        'Biosci. Biotechnol. Biochem. 2017;81(7):1363-1368 28475418[PMID].'
+      );
+      //console.log('PMID=' + pmid);
+      expect(pmid).toBe(`28475418`);
     });
     it('get from "PMID: 18342212" to be 18342212', async () => {
       const pmid = await PubmedParser.tryGetPmid('PMID: 18342212 ');
