@@ -1,5 +1,5 @@
-import { PubmedParser } from './index';
-jest.unmock('./index');
+import { PubmedParser } from './pubmed-parser';
+jest.unmock('./pubmed-parser');
 
 const long_format =
   '${index}) ${makeAuthorList()}. ${title}. ${year} ${month};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
@@ -8,7 +8,7 @@ const short_format =
 const search_word1 = 'Br. J. Haematol. 1995;89(1):24-33';
 const doi = 'doi: 10.3109/00365540903384158 ';
 
-describe('index.ts', () => {
+describe('pubmed-parser.ts', () => {
   describe('from(pmid:26314775).get', () => {
     it('get(authors6) to be Fizazi K, Greco FA, Pavlidis N, Daugaard G, Oien K, Pentheroudakis G', async () => {
       const parser = await PubmedParser.from('pmid:26314775');

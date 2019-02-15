@@ -14,6 +14,8 @@
     "clean-dist": "rimraf dist",
     "build-dev": "npm run clean-dist &&  npm run copy-to-dist && webpack --config webpack.dev.config.js",
     "build": "npm run clean && yarn run tsc -p ./tsconfig.module.json",
+    "git": "git add . && git commit -m",
+    "postgit": "git push origin master",
     "verdaccio:server": "verdaccio & TASKA_PID=$!",
     "testbuildandwait": "npm run test && npm run build && wait-on http://localhost:4873",
     "prepublish": "yarn run verdaccio:server & yarn run testbuildandwait"
