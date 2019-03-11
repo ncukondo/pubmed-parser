@@ -1,6 +1,6 @@
 {
   "name": "@ncukondo/pubmed-parser",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "",
   "main": "./built/index.js",
   "types": "./built/index.d.js",
@@ -17,8 +17,7 @@
     "git": "git add . && git commit -m",
     "postgit": "git push origin master",
     "verdaccio:server": "verdaccio & TASKA_PID=$!",
-    "testbuildandwait": "npm run test && npm run build && wait-on http://localhost:4873",
-    "prepublish": "yarn run verdaccio:server & yarn run testbuildandwait"
+    "testbuildandwait": "npm run test && npm run build && wait-on http://localhost:4873"
   },
   "keywords": [
     "typescript",
