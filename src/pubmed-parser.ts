@@ -24,9 +24,13 @@ class PmidError implements Error {
 class PubmedParser {
   private _refEntry?: RefEntry;
   private _request: AxiosPromise<any> | null = null;
-  formatter: Template = new Template();
+  formatter: Template;
 
-  private constructor() {}
+  private constructor() {
+    this.formatter = new Template();
+    this.formatter.prefix = '{';
+    this.formatter.postfix = '}';
+  }
 
   format(
     template: string,

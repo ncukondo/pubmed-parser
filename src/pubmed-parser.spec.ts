@@ -2,9 +2,11 @@ import { PubmedParser } from './pubmed-parser';
 jest.unmock('./pubmed-parser');
 
 const long_format =
-  '${index}) ${makeAuthorList()}. ${title}. ${year} ${month};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
+  '{index}) {authors}. {title}. {year} {month};{vol}{ issue && "("+issue+")"}:{page}{ pmid ? " Cited in PubMed; PMID:"+pmid : ""}.';
 const short_format =
-  '${journal_short}. ${year}${month ? " "+ month : ""};${vol}${ issue ? "("+issue+")" : ""}:${page}${ pmid ? " pmid:" + pmid : ""}.';
+  '{journal_short}. {year}{month ? " "+ month : ""};{vol}{ issue ? "("+issue+")" : ""}:{page}{ pmid ? " pmid:" + pmid : ""}.';
+const link_format =
+  '{authors.max(3).delimiter("/").trimWith(".etc")}. {journal_short}. {year}{month ? " "+ month : ""};{vol}{ issue ? "("+issue+")" : ""}:{page}{ link("https://www.ncbi.nlm.nih.gov/pubmed/%s",pmid).title(pmid)}.';
 const search_word1 = 'Br. J. Haematol. 1995;89(1):24-33';
 const doi = 'doi: 10.3109/00365540903384158 ';
 
@@ -50,7 +52,7 @@ describe('pubmed-parser.ts', () => {
       //console.log('PMID=' + pmid);
       expect(pmid).toBe(`18342212`);
     });
-    it(`get from '${search_word1}' to be 7530479`, async () => {
+    it(`get from '{search_word1}' to be 7530479`, async () => {
       const pmid = await PubmedParser.tryGetPmid(search_word1);
       //console.log('PMID=' + pmid);
       expect(pmid).toBe(`7530479`);
@@ -83,19 +85,30 @@ describe('pubmed-parser.ts', () => {
       });
     });
   });
+  describe('fromPmid().format() link', () => {
+    it('pmid:24749846 to be J Am Geriatr Soc. 2014 May;62(5):924-9 pmid:24749846.', async () => {
+      const parser = await PubmedParser.fromPmid('24749846');
+      const result = parser.format(link_format);
+      console.log('link_format:' + result);
+      expect(result).toBe(
+        `Leipzig RM/Sauvigné K/Granville LJ.etc. J Am Geriatr Soc. 2014 May;62(5):924-9<a href='https://www.ncbi.nlm.nih.gov/pubmed/24749846' target='_blank'>24749846</a>.`
+      );
+    });
+  });
+
   describe('from(searchword).format() short', () => {
-    it(`from('${search_word1}') to be Br. J. Haematol. 1995 Jan;89(1):24-33 pmid:7530479.`, async () => {
+    it(`from('{search_word1}') to be Br. J. Haematol. 1995 Jan;89(1):24-33 pmid:7530479.`, async () => {
       const parser = await PubmedParser.from(search_word1);
       const short_result = parser.format(short_format);
-      //console.log(`fromsearchword('${search_word1}'):  ${short_result}`);
+      //console.log(`fromsearchword('{search_word1}'):  {short_result}`);
       expect(short_result).toEqual(`Br. J. Haematol. 1995 Jan;89(1):24-33 pmid:7530479.`);
     });
   });
   describe('from(doi).format() short', () => {
-    it(`from('${doi}') to be Scand. J. Infect. Dis. 2010 Mar;42(3):222-4 pmid:19958237.`, async () => {
+    it(`from('{doi}') to be Scand. J. Infect. Dis. 2010 Mar;42(3):222-4 pmid:19958237.`, async () => {
       const parser = await PubmedParser.from(doi);
       const short_result = parser.format(short_format);
-      //console.log(`fromsearchword('${search_word1}'):  ${short_result}`);
+      //console.log(`fromsearchword('{search_word1}'):  {short_result}`);
       expect(short_result).toEqual(`Scand. J. Infect. Dis. 2010 Mar;42(3):222-4 pmid:19958237.`);
     });
   });

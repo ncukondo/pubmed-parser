@@ -54,6 +54,7 @@ class Template {
         );
       }
       result = new Function(...Object.keys(option), 'return ' + expr)(...Object.values(option));
+      result = result.toString();
     } catch (e) {
       result = onError(expr, this, e);
     }
